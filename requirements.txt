@@ -1,8 +1,8 @@
-streamlit==1.25.0         # Streamlit for the app interface
-pandas==1.5.3             # For data manipulation
-numpy==1.24.2             # For numerical computations
-plotly==5.14.1            # For interactive visualizations
-scikit-learn==1.2.2       # For machine learning algorithms and metrics
-xgboost==1.7.5            # XGBoost for regression
-matplotlib==3.7.1         # For ARIMA/XGBoost visualization
-st-aggrid==0.4.1          # For interactive data grids in Streamlit
+streamlit==1.25.0
+pandas==1.5.3
+numpy==1.24.3
+plotly==5.16.1
+scikit-learn==1.2.2
+xgboost==1.7.5
+st-aggrid==0.3.4
+matplotlib==3.7.1
