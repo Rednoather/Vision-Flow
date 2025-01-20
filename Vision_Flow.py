@@ -160,12 +160,12 @@ if tab_selection == "Data preparation":
                             complete_sales_data.rename(columns={0: "sales"}, inplace=True)
 
                             # 정리된 데이터 저장
-                            st.session_state.sales_data = complete_sales_data
+                            st.session_state.sales_data_integration = complete_sales_data
                             st.success("Sales Data cleaned successfully!")
 
                             # Cleaned Data 미리보기
                             st.write("Cleaned Sales Data:")
-                            st.dataframe(st.session_state.sales_data.head(10))
+                            st.dataframe(st.session_state.sales_data_integration.head(10))
                         except Exception as e:
                             st.error(f"Error cleaning Sales Data: {e}")
 
@@ -182,8 +182,11 @@ if tab_selection == "Data preparation":
 
                     # Integration 탭으로 데이터 전송 버튼
                     if st.button("Send to Data Integration", key="send_sales_to_integration"):
-                        st.session_state.sales_data_integration = st.session_state.sales_data
-                        st.success("Sales Data sent to Data Integration!")
+                        if "sales_data_integration" in st.session_state:
+                            st.success("Cleaned Sales Data is already sent to Data Integration!")  # 데이터가 이미 클리닝되었다는 메시지
+                        else:
+                            st.error("Please clean the Sales Data first before sending it to integration.")
+
 
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
@@ -497,6 +500,12 @@ if tab_selection == "Data preparation":
         if st.button("Generate Training Data"):
             if all(k in st.session_state for k in ["sales_data_integration", "climate_data_integration", "econ_data_integration"]):
                 try:
+                    # 데이터 결측값 처리
+                    st.session_state.sales_data_integration.fillna(0, inplace=True)
+                    st.session_state.climate_data_integration.fillna(0, inplace=True)
+                    st.session_state.econ_data_integration.fillna(0, inplace=True)
+
+
                     # 병합 전 date 열 타입 통일
                     st.session_state.sales_data_integration['date'] = pd.to_datetime(st.session_state.sales_data_integration['date'], errors='coerce')
                     st.session_state.climate_data_integration['date'] = pd.to_datetime(st.session_state.climate_data_integration['date'], errors='coerce')
@@ -694,7 +703,16 @@ if tab_selection == "Data preparation":
                                 prediction_datasets.append(sku_data)
 
                             # SKU별 데이터 병합
-                            combined_data = pd.concat(prediction_datasets)
+                            combined_data = pd.concat(prediction_datasets, ignore_index=True)
+
+                            # 디버깅: SKU별 데이터 확인
+                            st.write("First SKU Data Preview:")
+                            st.dataframe(prediction_datasets[0].head())
+
+                            # 디버깅: 병합 데이터 확인
+                            st.write("Combined Data Preview:")
+                            st.dataframe(combined_data.head())
+
 
                                 # Test Dataset 생성 후 열 순서 동기화
                             if "train_data" in st.session_state:
@@ -1113,15 +1131,26 @@ elif tab_selection == "Sales prediction":
     # 탭 1: 데이터 미리 보기
     with tab1:
         st.title("Data Preview")
-        dashboard_summary()
+        dashboard_summary()  # 요약 정보 표시
+        
         st.subheader("Training Data")
-        if st.session_state.train_data is not None:
+        if "train_data" in st.session_state and st.session_state.train_data is not None:
+            # Training Data가 정상적으로 로드된 경우 데이터 표시
+            st.write("Training Data Preview:")
             AgGrid(st.session_state.train_data)
-
+        else:
+            # Training Data가 없거나 로드되지 않은 경우
+            st.warning("Training Data is not available. Please upload or generate training data.")
+        
         st.subheader("Prediction Data")
-        if st.session_state.predict_data is not None:
+        if "predict_data" in st.session_state and st.session_state.predict_data is not None:
+            # Prediction Data가 정상적으로 로드된 경우 데이터 표시
+            st.write("Prediction Data Preview:")
             AgGrid(st.session_state.predict_data)
-       
+        else:
+            # Prediction Data가 없거나 로드되지 않은 경우
+            st.warning("Prediction Data is not available. Please upload prediction data.")
+
     
 
     # 탭 2: 모델 성능
